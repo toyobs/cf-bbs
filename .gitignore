@@ -1,0 +1,10 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+dist/
+*.log
+.DS_Store
+
+# 本地工作笔记（不公开）
+.workbuddy/

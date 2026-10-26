@@ -1,0 +1,77 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "cf-bbs"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# 自定义域名（自动创建 DNS 记录与证书，国内可直连）
+[[routes]]
+pattern = "forum.lovou.pw"
+custom_domain = true
+
+# 静态资源（CSS/JS/图标）由 Workers Assets 直接返回，不消耗 Worker 调用
+[assets]
+directory = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cf-bbs"
+database_id = "d81f0f8b-458e-4016-81ef-097b389270d2"
+migrations_dir = "migrations"
+
+[vars]
+SITE_NAME = "Nexus"
+SITE_TAGLINE = "轻量 · 开放 · 属于你的社区"
+ALLOW_REGISTRATION = "true"
+# PBKDF2 迭代次数。免费版 Workers CPU 上限较低时可下调到 50000
+PASSWORD_ITERATIONS = "100000"
+
+# 外部图床（Sanyue ImgHub / CloudFlare-ImgBed 系）：编辑器里上传图片后自动插入 Markdown
+# 同时配置 IMGBED_AUTH_CODE（secret）才会启用；删掉本行则关闭图片上传入口
+IMGBED_URL = "https://img.lovou.eu.org"
+# IMGBED_FOLDER = "bbs"
+# IMGBED_CHANNEL = "telegram"
+# IMGBED_MAX_MB = "8"
+# IMGBED_COMPRESS = "1"     # 交给图床做服务端压缩（默认关闭，部分渠道压缩会 400）
+# IMGBED_AUTO_RETRY = "1"   # 上传失败时自动切渠道（默认关闭）
+
+# 邮箱验证（Resend）
+# 邮件里的链接默认取请求 origin；自定义域名时建议显式设置 SITE_URL
+SITE_URL = "https://forum.lovou.pw"
+# 设为 "true" 后，未验证邮箱的用户不能发帖 / 回复（默认只提示不拦截）
+REQUIRE_EMAIL_VERIFICATION = "true"
+
+# 请求限流（Workers 原生 Rate Limiting binding，计数不经过 D1，也不花 Worker 额度）
+# 未登录访客 / 已登录用户 / 搜索 分别配额，按 IP 计数
+[[ratelimits]]
+name = "RL_PAGE"
+namespace_id = "1001"
+simple = { limit = 40, period = 60 }
+
+[[ratelimits]]
+name = "RL_USER"
+namespace_id = "1002"
+simple = { limit = 180, period = 60 }
+
+[[ratelimits]]
+name = "RL_SEARCH"
+namespace_id = "1003"
+simple = { limit = 10, period = 60 }
+
+[observability]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 密钥请用 `wrangler secret put` 写入，切勿提交到仓库：
+#   SESSION_SECRET        必填，任意 32+ 位随机字符串
+#   IMGBED_AUTH_CODE      可选，图床认证码；配置后编辑器出现「插入图片」
+#   RESEND_API_KEY        可选，Resend 发信密钥
+#   MAIL_FROM             可选，发件人，如 Nexus <noreply@lovou.pw>
+#   MAIL_REPLY_TO         可选，回复地址
+#   GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+#   GITLAB_CLIENT_ID / GITLAB_CLIENT_SECRET
+#   GITEE_CLIENT_ID  / GITEE_CLIENT_SECRET
+#   DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET
+#   OIDC_ISSUER / OIDC_CLIENT_ID / OIDC_CLIENT_SECRET / OIDC_NAME
+# ---------------------------------------------------------------------------
